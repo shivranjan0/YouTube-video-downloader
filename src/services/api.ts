@@ -9,11 +9,6 @@ interface DownloadOptions {
   onProgress?: (progress: number) => void;
 }
 
-interface DownloadResponse {
-  url?: string;
-  type: string;
-  filename: string;
-}
 
 export async function downloadMedia({ url, format, quality, onProgress }: DownloadOptions): Promise<void> {
   try {
@@ -32,11 +27,11 @@ export async function downloadMedia({ url, format, quality, onProgress }: Downlo
     });
 
     // Create a blob URL and trigger download
-    const blob = new Blob([response.data], { 
-      type: format === 'mp3' ? 'audio/mpeg' : 'video/mp4' 
+    const blob = new Blob([response.data], {
+      type: format === 'mp3' ? 'audio/mpeg' : 'video/mp4'
     });
     const blobUrl = window.URL.createObjectURL(blob);
-    
+
     // Get filename from Content-Disposition header
     const contentDisposition = response.headers['content-disposition'];
     let filename = 'download.' + format;
@@ -56,7 +51,20 @@ export async function downloadMedia({ url, format, quality, onProgress }: Downlo
     window.URL.revokeObjectURL(blobUrl);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data.error || 'Download failed');
+      // When responseType is 'blob', error bodies come back as Blobs — parse them
+      const data = error.response.data;
+      if (data instanceof Blob) {
+        try {
+          const text = await data.text();
+          const parsed = JSON.parse(text);
+          throw new Error(parsed.error || 'Download failed');
+        } catch (parseErr) {
+          // If parsing fails, rethrow the parse error if it's already an Error
+          if (parseErr instanceof Error && parseErr.message !== 'Download failed') throw parseErr;
+          throw new Error('Download failed');
+        }
+      }
+      throw new Error(data?.error || 'Download failed');
     }
     throw new Error('Failed to connect to the server');
   }
