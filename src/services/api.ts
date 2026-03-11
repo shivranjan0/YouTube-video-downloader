@@ -9,26 +9,34 @@ interface DownloadOptions {
   onProgress?: (progress: number) => void;
 }
 
-
-export async function downloadMedia({ url, format, quality, onProgress }: DownloadOptions): Promise<void> {
+export async function downloadMedia({
+  url,
+  format,
+  quality,
+  onProgress,
+}: DownloadOptions): Promise<void> {
   try {
-    const response = await axios.post(`${API_URL}/download`, {
-      url,
-      format,
-      quality
-    }, {
-      responseType: 'blob',
-      onDownloadProgress: (progressEvent) => {
-        if (progressEvent.total) {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          onProgress?.(percentCompleted);
-        }
+    const response = await axios.post(
+      `${API_URL}/download`,
+      {
+        url,
+        format,
+        quality,
+      },
+      {
+        responseType: 'blob',
+        onDownloadProgress: progressEvent => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onProgress?.(percentCompleted);
+          }
+        },
       }
-    });
+    );
 
     // Create a blob URL and trigger download
     const blob = new Blob([response.data], {
-      type: format === 'mp3' ? 'audio/mpeg' : 'video/mp4'
+      type: format === 'mp3' ? 'audio/mpeg' : 'video/mp4',
     });
     const blobUrl = window.URL.createObjectURL(blob);
 
@@ -75,7 +83,7 @@ export async function downloadFile(url: string, filename: string) {
     const response = await axios({
       url,
       method: 'GET',
-      responseType: 'blob'
+      responseType: 'blob',
     });
 
     // Create a blob URL and trigger download
@@ -91,4 +99,4 @@ export async function downloadFile(url: string, filename: string) {
   } catch (error) {
     throw new Error('Failed to download file');
   }
-} 
+}

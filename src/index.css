@@ -1,3 +1,129 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Brand Palette ─────────────────────────────────── */
+:root {
+  --cyan: #0cecdd;
+  --yellow: #fff338;
+  --pink: #ff67e7;
+  --purple: #c400ff;
+  --bg: #07080f;
+  --bg2: #0e1020;
+  --card: rgba(255, 255, 255, 0.04);
+  --border: rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Base ───────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+}
+
+/* ─── Background Mesh ───────────────────────────────── */
+.bg-mesh {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(12, 236, 221, 0.1) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 85% 10%, rgba(196, 0, 255, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(255, 103, 231, 0.08) 0%, transparent 60%),
+    var(--bg);
+  pointer-events: none;
+}
+
+/* ─── Neon card ─────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  backdrop-filter: blur(12px);
+  transition:
+    border-color 0.3s,
+    transform 0.3s,
+    box-shadow 0.3s;
+}
+.card:hover {
+  transform: translateY(-3px);
+}
+
+/* ─── Scrollbar ─────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--purple);
+  border-radius: 3px;
+}
+
+/* ─── Step number badge ─────────────────────────────── */
+.step-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 1rem 0 1rem;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--bg);
+}
+
+/* ─── Hero text cycling animation ───────────────────── */
+@keyframes wordIn {
+  0% {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes wordOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-28px);
+  }
+}
+.word-in {
+  animation: wordIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.word-out {
+  animation: wordOut 0.35s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+}
+
+/* ─── Footer ticker ──────────────────────────────────── */
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+.footer-ticker {
+  display: flex;
+  width: max-content;
+  animation: ticker 18s linear infinite;
+  white-space: nowrap;
+}

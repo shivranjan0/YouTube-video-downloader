@@ -8,51 +8,13 @@ interface DownloadModalProps {
   onClose: () => void;
 }
 
-
-
 const qualityOptions = [
-  {
-    value: '2160p',
-    label: '4K (Ultra HD)',
-    description: 'Premium Quality',
-    icon: <Video className="w-3 h-3" />,
-    badge: '4K'
-  },
-  {
-    value: '1440p',
-    label: '2K (QHD)',
-    description: 'Ultra High Quality',
-    icon: <Video className="w-3 h-3" />,
-    badge: '2K'
-  },
-  {
-    value: '1080p',
-    label: '1080p (FHD)',
-    description: 'Best Quality',
-    icon: <Video className="w-3 h-3" />,
-    badge: 'HD'
-  },
-  {
-    value: '720p',
-    label: '720p (HD)',
-    description: 'High Quality',
-    icon: <Video className="w-3 h-3" />,
-    badge: 'HD'
-  },
-  {
-    value: '480p',
-    label: '480p (SD)',
-    description: 'Standard Quality',
-    icon: <Video className="w-3 h-3" />,
-    badge: 'SD'
-  },
-  {
-    value: '360p',
-    label: '360p (Low)',
-    description: 'Data Saver',
-    icon: <Video className="w-3 h-3" />,
-    badge: 'Low'
-  },
+  { value: '2160p', label: '4K Ultra HD', badge: '4K', desc: 'Premium' },
+  { value: '1440p', label: '2K QHD', badge: '2K', desc: 'Ultra High' },
+  { value: '1080p', label: '1080p FHD', badge: 'HD', desc: 'Best' },
+  { value: '720p', label: '720p HD', badge: 'HD', desc: 'High' },
+  { value: '480p', label: '480p SD', badge: 'SD', desc: 'Standard' },
+  { value: '360p', label: '360p Low', badge: '↓', desc: 'Data Saver' },
 ];
 
 const DownloadModal: React.FC<DownloadModalProps> = ({ url, isOpen, onClose }) => {
@@ -69,140 +31,336 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ url, isOpen, onClose }) =
       setIsCompleted(false);
       setError(null);
       setDownloadProgress(0);
-
       await downloadMedia({
         url,
         format: selectedFormat,
         quality: selectedQuality,
-        onProgress: (progress) => {
-          setDownloadProgress(progress);
-        }
+        onProgress: setDownloadProgress,
       });
-
       setIsCompleted(true);
       setIsDownloading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Download failed');
       setIsDownloading(false);
-      setIsCompleted(false);
     }
   };
 
   if (!isOpen) return null;
 
+  const accent = selectedFormat === 'mp4' ? '#C400FF' : '#0CECDD';
+
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
-      <div className="bg-[#1a1f2d] rounded-lg w-[400px]">
-        <div className="p-6 space-y-6">
-          {/* Header */}
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl">
-              <span className="text-white font-semibold">Download</span>{' '}
-              <span className="text-[#3b82f6]">Options</span>
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-300 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Format Selection */}
+    /* ── Backdrop ── */
+    <div
+      onClick={e => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999 /* above everything incl. footer ticker */,
+        background: 'rgba(0,0,0,0.75)',
+        backdropFilter: 'blur(14px)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-start' /* anchor to top, not center */,
+        paddingTop: '90px' /* clears the floating navbar */,
+        padding: '120px 1rem 1rem',
+        boxSizing: 'border-box',
+        overflowY: 'auto',
+      }}
+    >
+      {/* ── Modal card ── */}
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '640px',
+          maxHeight: 'calc(100vh - 120px)',
+          overflowY: 'auto',
+          background: '#0e0e1a',
+          border: '1px solid rgba(255,255,255,0.07)',
+          borderRadius: '22px',
+          boxShadow: `0 0 80px ${accent}20, 0 40px 80px rgba(0,0,0,0.7)`,
+          transition: 'box-shadow 0.35s',
+        }}
+      >
+        {/* ── Header ── */}
+        <div
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 1,
+            background: '#0e0e1a',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '1rem 1.5rem 0.85rem',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
           <div>
-            <label className="block text-gray-200 text-sm mb-3">
-              Select Format
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setSelectedFormat('mp4')}
-                className={`flex items-center justify-center space-x-2 p-4 rounded-lg transition-colors ${selectedFormat === 'mp4'
-                  ? 'bg-[#1d4ed8] text-white'
-                  : 'bg-[#1e2536] text-gray-300 hover:bg-[#1e2536]/80'
-                  }`}
-              >
-                <Video className="w-5 h-5" />
-                <span className="font-medium">MP4 Video</span>
-              </button>
-              <button
-                onClick={() => setSelectedFormat('mp3')}
-                className={`flex items-center justify-center space-x-2 p-4 rounded-lg transition-colors ${selectedFormat === 'mp3'
-                  ? 'bg-[#1d4ed8] text-white'
-                  : 'bg-[#1e2536] text-gray-300 hover:bg-[#1e2536]/80'
-                  }`}
-              >
-                <Music className="w-5 h-5" />
-                <span className="font-medium">MP3 Audio</span>
-              </button>
-            </div>
+            <h2
+              style={{ fontWeight: 800, fontSize: '1.15rem', margin: 0, letterSpacing: '-0.01em' }}
+            >
+              Download <span style={{ color: accent, transition: 'color 0.3s' }}>Options</span>
+            </h2>
+            <p
+              style={{ color: 'rgba(255,255,255,0.28)', fontSize: '0.78rem', margin: '0.2rem 0 0' }}
+            >
+              Choose your format and quality
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              width: '32px',
+              height: '32px',
+              flexShrink: 0,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: 'rgba(255,255,255,0.4)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'background 0.2s, color 0.2s',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
+              e.currentTarget.style.color = '#fff';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+              e.currentTarget.style.color = 'rgba(255,255,255,0.4)';
+            }}
+          >
+            <X size={15} />
+          </button>
+        </div>
+
+        <div style={{ padding: '1rem 1.5rem 1.25rem' }}>
+          {/* ── Format selector ── */}
+          <label
+            style={{
+              display: 'block',
+              fontSize: '0.68rem',
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.25)',
+              marginBottom: '0.6rem',
+            }}
+          >
+            Format
+          </label>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '0.5rem',
+              marginBottom: '1rem',
+            }}
+          >
+            {[
+              { id: 'mp4', label: 'MP4 Video', Icon: Video, color: '#C400FF' },
+              { id: 'mp3', label: 'MP3 Audio', Icon: Music, color: '#0CECDD' },
+            ].map(f => {
+              const on = selectedFormat === f.id;
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => setSelectedFormat(f.id)}
+                  style={{
+                    padding: '0.7rem 1rem',
+                    borderRadius: '12px',
+                    border: `1.5px solid ${on ? f.color : 'rgba(255,255,255,0.07)'}`,
+                    background: on ? `${f.color}14` : 'rgba(255,255,255,0.02)',
+                    color: on ? f.color : 'rgba(255,255,255,0.38)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.45rem',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    boxShadow: on ? `0 0 20px ${f.color}28` : 'none',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <f.Icon size={16} /> {f.label}
+                </button>
+              );
+            })}
           </div>
 
+          {/* ── Quality (MP4 only) ── */}
           {selectedFormat === 'mp4' && (
-            <div className="space-y-3">
-              <label className="block text-gray-200 text-sm">
-                Select Quality
+            <>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,0.25)',
+                  marginBottom: '0.6rem',
+                }}
+              >
+                Quality
               </label>
-              <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-1">
-                {qualityOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setSelectedQuality(option.value)}
-                    className={`flex flex-col items-start p-3 rounded-lg border-2 transition-all ${selectedQuality === option.value
-                      ? 'border-[#1d4ed8] bg-[#1d4ed8]/10 text-white'
-                      : 'border-transparent bg-[#1e2536] text-gray-400 hover:bg-[#1e2536]/80'
-                      }`}
-                  >
-                    <div className="flex items-center justify-between w-full mb-1">
-                      <span className="text-sm font-semibold">{option.label}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#1d4ed8]/20 text-[#3b82f6] font-bold">
-                        {option.badge}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr',
+                  gap: '0.45rem',
+                  marginBottom: '1rem',
+                }}
+              >
+                {qualityOptions.map(opt => {
+                  const on = selectedQuality === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => setSelectedQuality(opt.value)}
+                      style={{
+                        padding: '0.55rem 0.7rem',
+                        borderRadius: '10px',
+                        textAlign: 'left',
+                        border: `1.5px solid ${on ? '#FFF338' : 'rgba(255,255,255,0.06)'}`,
+                        background: on ? 'rgba(255,243,56,0.07)' : 'rgba(255,255,255,0.02)',
+                        color: on ? '#FFF338' : 'rgba(255,255,255,0.38)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        boxShadow: on ? '0 0 14px rgba(255,243,56,0.16)' : 'none',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '0.8rem' }}>{opt.label}</div>
+                        <div style={{ fontSize: '0.68rem', opacity: 0.45, marginTop: '2px' }}>
+                          {opt.desc}
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.6rem',
+                          fontWeight: 800,
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          background: on ? 'rgba(255,243,56,0.15)' : 'rgba(255,255,255,0.05)',
+                          color: on ? '#FFF338' : 'rgba(255,255,255,0.22)',
+                          letterSpacing: '0.04em',
+                        }}
+                      >
+                        {opt.badge}
                       </span>
-                    </div>
-                    <span className="text-[10px] opacity-60 font-medium">
-                      {option.description}
-                    </span>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
-            </div>
+            </>
           )}
 
+          {/* ── Error ── */}
           {error && (
-            <div className="text-red-500 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">
+            <div
+              style={{
+                padding: '0.75rem 1rem',
+                borderRadius: '10px',
+                marginBottom: '1rem',
+                background: 'rgba(255,70,70,0.07)',
+                border: '1px solid rgba(255,70,70,0.18)',
+                color: '#ff7777',
+                fontSize: '0.82rem',
+              }}
+            >
               {error}
             </div>
           )}
 
-          {/* Download Button */}
+          {/* ── Progress bar ── */}
+          {isDownloading && (
+            <div
+              style={{
+                height: '2px',
+                borderRadius: '9999px',
+                background: 'rgba(255,255,255,0.06)',
+                marginBottom: '1rem',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  width: `${downloadProgress}%`,
+                  background: accent,
+                  borderRadius: '9999px',
+                  transition: 'width 0.3s',
+                }}
+              />
+            </div>
+          )}
+
+          {/* ── Download button ── */}
           <button
             onClick={handleDownload}
             disabled={isDownloading}
-            className={`w-full h-12 rounded-lg text-white font-medium flex items-center justify-center space-x-2 transition-colors disabled:cursor-not-allowed ${isCompleted
-              ? 'bg-green-600 hover:bg-green-700'
-              : 'bg-[#1d4ed8] hover:bg-[#1e40af] disabled:opacity-50'
-              }`}
+            style={{
+              width: '100%',
+              padding: '1rem',
+              borderRadius: '14px',
+              border: 'none',
+              fontWeight: 700,
+              fontSize: '1rem',
+              letterSpacing: '0.01em',
+              cursor: isDownloading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              background: isCompleted
+                ? '#0CECDD'
+                : isDownloading
+                  ? 'rgba(255,255,255,0.05)'
+                  : accent,
+              color: isCompleted ? '#07080f' : isDownloading ? 'rgba(255,255,255,0.22)' : '#fff',
+              boxShadow: isDownloading
+                ? 'none'
+                : isCompleted
+                  ? '0 0 28px rgba(12,236,221,0.45)'
+                  : `0 0 32px ${accent}55`,
+              transition: 'all 0.3s',
+            }}
           >
             {isDownloading ? (
-              <div className="flex items-center justify-center space-x-2">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Downloading... {downloadProgress}%</span>
-              </div>
+              <>
+                <Loader2 size={18} className="animate-spin" /> Downloading… {downloadProgress}%
+              </>
             ) : isCompleted ? (
-              <div className="flex items-center justify-center space-x-2">
-                <Check className="w-5 h-5" />
-                <span>Download Complete!</span>
-              </div>
+              <>
+                <Check size={18} /> Download Complete!
+              </>
             ) : (
-              <div className="flex items-center justify-center space-x-2">
-                <Download className="w-5 h-5" />
-                <span>Start Download</span>
-              </div>
+              <>
+                <Download size={18} /> Start Download
+              </>
             )}
           </button>
 
-          {/* Terms */}
-          <p className="text-xs text-center text-gray-400">
-            By downloading, you agree to our terms and confirm you have rights to use this content
+          <p
+            style={{
+              textAlign: 'center',
+              color: 'rgba(255,255,255,0.13)',
+              fontSize: '0.7rem',
+              marginTop: '0.85rem',
+            }}
+          >
+            By downloading you agree to our terms of service
           </p>
         </div>
       </div>

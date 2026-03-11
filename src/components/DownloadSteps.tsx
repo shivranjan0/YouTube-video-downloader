@@ -1,61 +1,182 @@
 import React from 'react';
-import { Link } from 'lucide-react';
-import { Clipboard, MousePointer, Download, FileType } from 'lucide-react';
+import { Clipboard, Link, MousePointer, Save } from 'lucide-react';
 
 const steps = [
   {
+    number: '01',
     title: 'Copy the URL',
-    description: 'Find the video or image you want to download and copy its URL from the address bar or share menu.',
-    icon: <Clipboard className="w-8 h-8 text-purple-600" />,
-    number: 1,
+    description: 'Find the YouTube video and copy its URL from the address bar.',
+    icon: <Clipboard size={22} />,
+    color: '#0CECDD',
   },
   {
+    number: '02',
     title: 'Paste the Link',
-    description: 'Paste the copied URL into the input box on our homepage.',
-    icon: <Link className="w-8 h-8 text-purple-600" />,
-    number: 2,
+    description: 'Paste the URL into the input box on the homepage.',
+    icon: <Link size={22} />,
+    color: '#FFF338',
   },
   {
+    number: '03',
     title: 'Click Download',
-    description: 'Press the download button and wait for our system to process the link.',
-    icon: <MousePointer className="w-8 h-8 text-purple-600" />,
-    number: 3,
+    description: 'Hit the download button and let us process the link instantly.',
+    icon: <MousePointer size={22} />,
+    color: '#FF67E7',
   },
   {
+    number: '04',
     title: 'Save Your File',
-    description: 'Choose your preferred format and quality, then download the file to your device.',
-    icon: <FileType className="w-8 h-8 text-purple-600" />,
-    number: 4,
+    description: 'Pick your format and quality, then save directly to your device.',
+    icon: <Save size={22} />,
+    color: '#C400FF',
   },
 ];
 
 const DownloadSteps: React.FC = () => {
   return (
-    <section className="py-20 px-6 bg-gray-50 dark:bg-slate-900/50">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text">
-              How to Download
-            </span>
+    <section style={{ padding: '5rem 1.5rem 6rem', position: 'relative', zIndex: 10 }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        {/* Section header */}
+        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+          <p
+            style={{
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              color: '#FF67E7',
+              marginBottom: '0.75rem',
+            }}
+          >
+            How it works
+          </p>
+          <h2
+            style={{
+              fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+              fontWeight: 800,
+              color: '#fff',
+              letterSpacing: '-0.02em',
+              marginBottom: '0.75rem',
+            }}
+          >
+            Three steps to your file
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Follow these simple steps to download any video or image from supported platforms.
+          <p
+            style={{
+              color: 'rgba(255,255,255,0.35)',
+              fontSize: '1rem',
+              maxWidth: '420px',
+              margin: '0 auto',
+            }}
+          >
+            Simple, fast, and completely free — no sign-up required.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {steps.map((step, index) => (
-            <div 
-              key={index}
-              className="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden"
+        {/* Steps row */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '1px',
+            background: 'rgba(255,255,255,0.07)',
+            borderRadius: '20px',
+            overflow: 'hidden',
+            border: '1px solid rgba(255,255,255,0.07)',
+          }}
+        >
+          {steps.map((step, idx) => (
+            <div
+              key={step.number}
+              style={{
+                padding: '2.5rem 2rem',
+                background: '#0d0d14',
+                position: 'relative',
+                transition: 'background 0.25s',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = '#131320';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = '#0d0d14';
+              }}
             >
-              <div className="absolute top-0 right-0 bg-gradient-to-br from-purple-600 to-blue-500 text-white w-10 h-10 flex items-center justify-center rounded-bl-lg font-bold">
+              {/* Step number — large faint */}
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '1.25rem',
+                  right: '1.5rem',
+                  fontSize: '0.7rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.12em',
+                  color: step.color,
+                  opacity: 0.5,
+                }}
+              >
                 {step.number}
+              </span>
+
+              {/* Icon circle */}
+              <div
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: `${step.color}12`,
+                  border: `1px solid ${step.color}28`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: step.color,
+                  marginBottom: '1.25rem',
+                }}
+              >
+                {step.icon}
               </div>
-              <div className="mb-6">{step.icon}</div>
-              <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
-              <p className="text-gray-600 dark:text-gray-400">{step.description}</p>
+
+              <h3
+                style={{
+                  fontWeight: 700,
+                  fontSize: '1rem',
+                  color: '#fff',
+                  marginBottom: '0.5rem',
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                {step.title}
+              </h3>
+              <p
+                style={{
+                  color: 'rgba(255,255,255,0.38)',
+                  fontSize: '0.875rem',
+                  lineHeight: 1.65,
+                }}
+              >
+                {step.description}
+              </p>
+
+              {/* Bottom color line */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: '2px',
+                  background: step.color,
+                  opacity: 0.35,
+                }}
+              />
+
+              {/* Connector arrow between cards */}
+              {idx < steps.length - 1 && (
+                <div
+                  style={{
+                    display: 'none', // hidden on mobile, shown via media query workaround
+                  }}
+                />
+              )}
             </div>
           ))}
         </div>

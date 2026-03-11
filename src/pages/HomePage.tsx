@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import HeroSection from '../components/HeroSection';
-import FeaturesSection from '../components/FeaturesSection';
 import DownloadSteps from '../components/DownloadSteps';
+import FaqSection from '../components/FaqSection';
 import DownloadModal from '../components/DownloadModal';
 
 const HomePage: React.FC = () => {
@@ -16,13 +16,9 @@ const HomePage: React.FC = () => {
   return (
     <div>
       <HeroSection onUrlSubmit={handleUrlSubmit} />
-      <FeaturesSection />
       <DownloadSteps />
-      <DownloadModal 
-        url={downloadUrl}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
+      <FaqSection />
+      <DownloadModal url={downloadUrl} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };

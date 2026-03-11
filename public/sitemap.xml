@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- ── Home / YouTube Downloader ── -->
+  <url>
+    <loc>https://audivio.com/</loc>
+    <lastmod>2025-03-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- ── About ── -->
+  <url>
+    <loc>https://audivio.com/about</loc>
+    <lastmod>2025-03-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- ── Contact ── -->
+  <url>
+    <loc>https://audivio.com/contact</loc>
+    <lastmod>2025-03-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- ── Privacy Policy ── -->
+  <url>
+    <loc>https://audivio.com/privacy</loc>
+    <lastmod>2025-03-11</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <!-- ── Terms & Conditions ── -->
+  <url>
+    <loc>https://audivio.com/terms</loc>
+    <lastmod>2025-03-11</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+</urlset>

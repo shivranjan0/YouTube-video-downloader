@@ -1,32 +1,37 @@
 /**
  * VideoGrab Backend Server - Modern ESM Implementation
- * Latest library versions: express^5, @distube/ytdl-core^latest
  */
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { YoutubeService } from './services/youtube';
-import { detectPlatform } from '../src/utils/detectPlatform';
+import { MailService } from './services/mailer';
+import { detectPlatform } from './utils/detectPlatform';
 import * as dotenv from 'dotenv';
 
-dotenv.config();
-
+// ESM polyfill for __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load environment variables from root directory
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Initialize Services
 const youtubeService = new YoutubeService();
+const mailService = new MailService();
 
 // Middleware
-app.use(cors({
-  origin: '*', // Allow all origins for dev, restrict in production
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(
+  cors({
+    origin: '*', // Allow all origins for dev, restrict in production
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 app.use(express.json());
 
 // Routes
@@ -48,17 +53,38 @@ app.post('/api/download', async (req, res) => {
     if (platform === 'youtube') {
       await youtubeService.handleDownload(url, format, quality, res);
     } else {
-      // Future platforms (TikTok, Instagram, etc) can be implemented here
       res.status(400).json({ error: `Platform ${platform} support currently being updated.` });
     }
-
   } catch (error: any) {
     console.error('[Server Error]:', error);
     if (!res.headersSent) {
       res.status(500).json({
-        error: error.message || 'An unexpected error occurred during processing'
+        error: error.message || 'An unexpected error occurred during processing',
       });
     }
+  }
+});
+
+// Contact Route (SMTP)
+app.post('/api/contact', async (req: Request, res: Response) => {
+  try {
+    const { from_name, from_email, subject, message } = req.body;
+
+    if (!from_name || !from_email || !message) {
+      return res.status(400).json({ error: 'Name, email, and message are required' });
+    }
+
+    console.log(`[Server] Handling contact from: ${from_email}`);
+
+    await mailService.sendContactMail(from_name, from_email, subject, message);
+
+    res.json({ success: true, message: 'Your message has been sent successfully.' });
+  } catch (error: any) {
+    console.error('[Mail Server Error Details]:', error);
+    res.status(500).json({
+      error: 'Failed to send your message. Please try again later or email us directly.',
+      details: error.message,
+    });
   }
 });
 
@@ -72,7 +98,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 app.listen(PORT, () => {
   console.log(`
-  🚀 VideoGrab Backend v2.0
+  🚀 Audivio Backend Live
   -------------------------
   Main API: http://localhost:${PORT}
   Health:   http://localhost:${PORT}/health

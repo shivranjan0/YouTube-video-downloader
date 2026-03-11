@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Block server-side/API routes from indexing
+Disallow: /api/
+Disallow: /temp_downloads/
+
+# Sitemap location
+Sitemap: https://audivio.com/sitemap.xml
