@@ -46,13 +46,12 @@ export class YoutubeService {
       console.log(`[YouTube] Request: ${format} | ${quality} | ${url}`);
       console.log('[YouTube] Fetching metadata...');
 
-      // 2. Format options for yt-dlp - Using iOS client which is less likely to be blocked
+      // 2. Format options for yt-dlp - Using Android client (Best balance of stability/bypass)
       const commonOptions: any = {
         noWarnings: true,
         noCheckCertificates: true,
-        preferFreeFormats: true,
-        addHeader: ['User-Agent:com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iPhone OS 17_5_1 like Mac OS X; en_US)'],
-        extractorArgs: 'youtube:player-client=ios,web',
+        addHeader: ['User-Agent:Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36'],
+        extractorArgs: 'youtube:player-client=android,web',
         forceIpv4: true,
       };
 
