@@ -18,6 +18,15 @@ export class YoutubeService {
    * Main download handler
    */
   async handleDownload(url: string, format: string, quality: string, res: Response) {
+    // 1. Clean the URL (remove tracking parameters like ?si=)
+    try {
+      const parsedUrl = new URL(url);
+      parsedUrl.searchParams.delete('si');
+      url = parsedUrl.toString();
+    } catch (e) {
+      // If URL parsing fails, continue with original url
+    }
+
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       throw new Error('Invalid URL');
     }
@@ -38,18 +47,22 @@ export class YoutubeService {
       console.log('[YouTube] Fetching metadata...');
 
       // 2. Format options for yt-dlp
-      const options: any = {
-        dumpJson: true,
+      const commonOptions: any = {
         noWarnings: true,
         noCheckCertificates: true,
         preferFreeFormats: true,
+        addHeader: ['User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'],
+        extractorArgs: 'youtube:player-client=web_creator',
       };
 
       if (cookieFilePath) {
-        options.cookies = cookieFilePath;
+        commonOptions.cookies = cookieFilePath;
       }
 
-      const info = await ytDlp(url, options);
+      const info = await ytDlp(url, {
+        ...commonOptions,
+        dumpJson: true,
+      });
 
       // Need to parse if ytDlp returned a string
       const metadata = typeof info === 'string' ? JSON.parse(info) : info;
@@ -57,9 +70,9 @@ export class YoutubeService {
       console.log(`[YouTube] Title: ${title}`);
 
       if (format === 'mp3') {
-        await this.handleAudio(url, title, res, cookieFilePath);
+        await this.handleAudio(url, title, res, commonOptions);
       } else {
-        await this.handleVideo(url, title, quality, res, cookieFilePath);
+        await this.handleVideo(url, title, quality, res, commonOptions);
       }
     } catch (error: any) {
       console.error('[yt-dlp Metadata Error Details]:', error);
@@ -78,7 +91,7 @@ export class YoutubeService {
     }
   }
 
-  private async handleAudio(url: string, title: string, res: Response, cookieFilePath?: string) {
+  private async handleAudio(url: string, title: string, res: Response, commonOptions: any) {
     console.log('[YouTube] Starting Audio Download...');
 
     // Ensure temp directory exists - use /tmp on Linux (Render) for better reliability
@@ -90,21 +103,14 @@ export class YoutubeService {
     const tempFilePath = path.join(tempDir, tempFileName);
 
     try {
-      const options: any = {
+      const ytDlpProcess = ytDlp.exec(url, {
+        ...commonOptions,
         extractAudio: true,
         audioFormat: 'mp3',
         audioQuality: '0',
         output: tempFilePath,
         ffmpegLocation: ffmpegPath,
-        noWarnings: true,
-        noCheckCertificates: true,
-      };
-
-      if (cookieFilePath) {
-        options.cookies = cookieFilePath;
-      }
-
-      const ytDlpProcess = ytDlp.exec(url, options);
+      });
 
       if (ytDlpProcess.stderr) {
         ytDlpProcess.stderr.on('data', (data: any) => {
@@ -171,7 +177,7 @@ export class YoutubeService {
     }
   }
 
-  private async handleVideo(url: string, title: string, quality: string, res: Response, cookieFilePath?: string) {
+  private async handleVideo(url: string, title: string, quality: string, res: Response, commonOptions: any) {
     const height = parseInt(quality) || 720;
     console.log(`[YouTube] Starting Video Download (${height}p)...`);
 
@@ -189,19 +195,12 @@ export class YoutubeService {
     console.log(`[YouTube] Using format: ${formatString}`);
 
     try {
-      const options: any = {
+      const ytDlpProcess = ytDlp.exec(url, {
+        ...commonOptions,
         format: formatString,
         output: tempFilePath,
         ffmpegLocation: ffmpegPath,
-        noWarnings: true,
-        noCheckCertificates: true,
-      };
-
-      if (cookieFilePath) {
-        options.cookies = cookieFilePath;
-      }
-
-      const ytDlpProcess = ytDlp.exec(url, options);
+      });
 
       if (ytDlpProcess.stderr) {
         ytDlpProcess.stderr.on('data', (data: any) => {
