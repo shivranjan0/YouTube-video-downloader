@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "format": "prettier --write .",
     "server": "tsx server/index.ts",
-    "start": "concurrently \"npm run dev\" \"npm run server\""
+    "start": "concurrently \"npm run dev\" \"npm run server\"",
+    "start:backend": "tsx server/index.ts"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
@@ -34,7 +35,8 @@
     "react-router-dom": "^6.21.3",
     "ts-node": "^10.9.2",
     "yt-dlp-exec": "^1.0.2",
-    "ytdl-core": "npm:@distube/ytdl-core@^4.16.12"
+    "ytdl-core": "npm:@distube/ytdl-core@^4.16.12",
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",
@@ -56,7 +58,6 @@
     "postcss": "^8.4.33",
     "prettier": "^3.8.1",
     "tailwindcss": "^3.4.1",
-    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite": "^5.0.8"
   }

@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Mail, MapPin, Phone, Send, Loader2, CheckCircle, ArrowUpRight } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000'; // Make sure this matches your backend PORT
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'; // Make sure this matches your backend PORT
 
 const ContactPage: React.FC = () => {
   const formRef = useRef<HTMLFormElement>(null);

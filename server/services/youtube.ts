@@ -5,10 +5,13 @@ import fs from 'fs-extra';
 
 import ffmpeg from '@ffmpeg-installer/ffmpeg';
 
-// Use the local yt-dlp binary we downloaded to the root
-const ytDlpPath = path.join(process.cwd(), 'yt-dlp.exe');
+// Use the local yt-dlp binary on Windows, or default to system/package on other platforms (like Render/Linux)
+const isWindows = process.platform === 'win32';
+const ytDlpPath = isWindows ? path.join(process.cwd(), 'yt-dlp.exe') : undefined;
 const ffmpegPath = ffmpeg.path;
-const ytDlp = (ytDlpPkg as any).create(ytDlpPath);
+
+// Create the yt-dlp instance - if path is undefined, it uses the package's internal binary
+const ytDlp = ytDlpPath ? (ytDlpPkg as any).create(ytDlpPath) : ytDlpPkg;
 
 export class YoutubeService {
   /**
