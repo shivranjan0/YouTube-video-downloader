@@ -22,17 +22,34 @@ export class YoutubeService {
       throw new Error('Invalid URL');
     }
 
-    console.log(`[YouTube] Request: ${format} | ${quality} | ${url}`);
+    let cookieFilePath: string | undefined;
 
     try {
+      // 1. Check for Cookies in Env Var (to bypass bot detection)
+      if (process.env.YT_COOKIES) {
+        const tempDir = process.platform === 'win32' ? path.join(process.cwd(), 'temp_downloads') : '/tmp';
+        await fs.ensureDir(tempDir);
+        cookieFilePath = path.join(tempDir, `cookies-${Date.now()}.txt`);
+        await fs.writeFile(cookieFilePath, process.env.YT_COOKIES);
+        console.log('[YouTube] Using cookies from environment variable');
+      }
+
+      console.log(`[YouTube] Request: ${format} | ${quality} | ${url}`);
       console.log('[YouTube] Fetching metadata...');
-      // Get metadata first to get the title
-      const info = await ytDlp(url, {
+
+      // 2. Format options for yt-dlp
+      const options: any = {
         dumpJson: true,
         noWarnings: true,
         noCheckCertificates: true,
         preferFreeFormats: true,
-      });
+      };
+
+      if (cookieFilePath) {
+        options.cookies = cookieFilePath;
+      }
+
+      const info = await ytDlp(url, options);
 
       // Need to parse if ytDlp returned a string
       const metadata = typeof info === 'string' ? JSON.parse(info) : info;
@@ -40,34 +57,40 @@ export class YoutubeService {
       console.log(`[YouTube] Title: ${title}`);
 
       if (format === 'mp3') {
-        await this.handleAudio(url, title, res);
+        await this.handleAudio(url, title, res, cookieFilePath);
       } else {
-        await this.handleVideo(url, title, quality, res);
+        await this.handleVideo(url, title, quality, res, cookieFilePath);
       }
     } catch (error: any) {
-      console.error('[yt-dlp Metadata Error]:', error.message || error);
+      console.error('[yt-dlp Metadata Error Details]:', error);
       if (!res.headersSent) {
         res
           .status(500)
           .json({
-            error: 'Failed to fetch video information. YouTube might be blocking the request.',
+            error: 'YouTube is blocking the request. Please check if cookies are required.',
           });
+      }
+    } finally {
+      // Cleanup cookie file if created
+      if (cookieFilePath && (await fs.pathExists(cookieFilePath))) {
+        await fs.remove(cookieFilePath).catch(() => {});
       }
     }
   }
 
-  private async handleAudio(url: string, title: string, res: Response) {
+  private async handleAudio(url: string, title: string, res: Response, cookieFilePath?: string) {
     console.log('[YouTube] Starting Audio Download...');
 
-    // Ensure temp directory exists
-    const tempDir = path.join(process.cwd(), 'temp_downloads');
+    // Ensure temp directory exists - use /tmp on Linux (Render) for better reliability
+    const isWindows = process.platform === 'win32';
+    const tempDir = isWindows ? path.join(process.cwd(), 'temp_downloads') : '/tmp';
     await fs.ensureDir(tempDir);
 
     const tempFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`;
     const tempFilePath = path.join(tempDir, tempFileName);
 
     try {
-      const ytDlpProcess = ytDlp.exec(url, {
+      const options: any = {
         extractAudio: true,
         audioFormat: 'mp3',
         audioQuality: '0',
@@ -75,7 +98,13 @@ export class YoutubeService {
         ffmpegLocation: ffmpegPath,
         noWarnings: true,
         noCheckCertificates: true,
-      });
+      };
+
+      if (cookieFilePath) {
+        options.cookies = cookieFilePath;
+      }
+
+      const ytDlpProcess = ytDlp.exec(url, options);
 
       if (ytDlpProcess.stderr) {
         ytDlpProcess.stderr.on('data', (data: any) => {
@@ -129,7 +158,7 @@ export class YoutubeService {
           .catch(err => console.error('Failed to remove temp audio file:', err));
       });
     } catch (error: any) {
-      console.error('[handleAudio Error]:', error.message || error);
+      console.error('[handleAudio Error Details]:', error);
       if (!res.headersSent) {
         res.status(500).json({
           error: 'Failed to process audio. YouTube might be blocking the request or FFmpeg failed.',
@@ -142,12 +171,13 @@ export class YoutubeService {
     }
   }
 
-  private async handleVideo(url: string, title: string, quality: string, res: Response) {
+  private async handleVideo(url: string, title: string, quality: string, res: Response, cookieFilePath?: string) {
     const height = parseInt(quality) || 720;
     console.log(`[YouTube] Starting Video Download (${height}p)...`);
 
-    // Ensure temp directory exists
-    const tempDir = path.join(process.cwd(), 'temp_downloads');
+    // Ensure temp directory exists - use /tmp on Linux (Render) for better reliability
+    const isWindows = process.platform === 'win32';
+    const tempDir = isWindows ? path.join(process.cwd(), 'temp_downloads') : '/tmp';
     await fs.ensureDir(tempDir);
 
     const tempFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.mp4`;
@@ -159,13 +189,19 @@ export class YoutubeService {
     console.log(`[YouTube] Using format: ${formatString}`);
 
     try {
-      const ytDlpProcess = ytDlp.exec(url, {
+      const options: any = {
         format: formatString,
         output: tempFilePath,
         ffmpegLocation: ffmpegPath,
         noWarnings: true,
         noCheckCertificates: true,
-      });
+      };
+
+      if (cookieFilePath) {
+        options.cookies = cookieFilePath;
+      }
+
+      const ytDlpProcess = ytDlp.exec(url, options);
 
       if (ytDlpProcess.stderr) {
         ytDlpProcess.stderr.on('data', (data: any) => {
