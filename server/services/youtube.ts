@@ -34,25 +34,32 @@ export class YoutubeService {
     let cookieFilePath: string | undefined;
 
     try {
-      // 1. Check for Cookies in Env Var (to bypass bot detection)
-      if (process.env.YT_COOKIES) {
-        const tempDir = process.platform === 'win32' ? path.join(process.cwd(), 'temp_downloads') : '/tmp';
+      // 1. Check for Cookies in Env Var
+      if (process.env.YT_COOKIES && process.env.YT_COOKIES.length > 50) {
+        const tempDir = isWindows ? path.join(process.cwd(), 'temp_downloads') : '/tmp';
         await fs.ensureDir(tempDir);
         cookieFilePath = path.join(tempDir, `cookies-${Date.now()}.txt`);
         await fs.writeFile(cookieFilePath, process.env.YT_COOKIES);
-        console.log('[YouTube] Using cookies from environment variable');
+        console.log('[YouTube] Successfully loaded cookies from environment.');
+      } else {
+        console.warn('[YouTube] Warning: No YT_COOKIES found in environment. This will likely fail on Render!');
       }
 
       console.log(`[YouTube] Request: ${format} | ${quality} | ${url}`);
       console.log('[YouTube] Fetching metadata...');
 
-      // 2. Format options for yt-dlp - Using Android client (Best balance of stability/bypass)
+      // 2. Advanced Bypass Options
       const commonOptions: any = {
         noWarnings: true,
         noCheckCertificates: true,
-        addHeader: ['User-Agent:Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36'],
-        extractorArgs: 'youtube:player-client=android,web',
+        addHeader: [
+          'User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'Accept-Language:en-US,en;q=0.9',
+          'Referer:https://www.youtube.com/',
+        ],
+        extractorArgs: 'youtube:player-client=android,web,ios',
         forceIpv4: true,
+        noCacheDir: true,
       };
 
       if (cookieFilePath) {
@@ -77,11 +84,9 @@ export class YoutubeService {
     } catch (error: any) {
       console.error('[yt-dlp Metadata Error Details]:', error);
       if (!res.headersSent) {
-        res
-          .status(500)
-          .json({
-            error: 'YouTube is blocking the request. Please check if cookies are required.',
-          });
+        res.status(500).json({
+          error: 'YouTube is blocking the request. Please check if cookies are required.',
+        });
       }
     } finally {
       // Cleanup cookie file if created
@@ -94,8 +99,6 @@ export class YoutubeService {
   private async handleAudio(url: string, title: string, res: Response, commonOptions: any) {
     console.log('[YouTube] Starting Audio Download...');
 
-    // Ensure temp directory exists - use /tmp on Linux (Render) for better reliability
-    const isWindows = process.platform === 'win32';
     const tempDir = isWindows ? path.join(process.cwd(), 'temp_downloads') : '/tmp';
     await fs.ensureDir(tempDir);
 
@@ -121,7 +124,6 @@ export class YoutubeService {
         });
       }
 
-      // Wait for the process to finish
       await new Promise((resolve, reject) => {
         ytDlpProcess.on('error', reject);
         ytDlpProcess.on('close', (code: number) => {
@@ -132,7 +134,6 @@ export class YoutubeService {
 
       console.log(`[YouTube] Audio download complete to ${tempFilePath}`);
 
-      // Check if file exists and has size
       if (!(await fs.pathExists(tempFilePath))) {
         throw new Error('Downloaded audio file not found');
       }
@@ -142,7 +143,6 @@ export class YoutubeService {
         throw new Error('Downloaded audio file is empty');
       }
 
-      // Send the file
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
       res.setHeader('Content-Length', stats.size);
@@ -152,16 +152,12 @@ export class YoutubeService {
 
       readStream.on('end', async () => {
         console.log(`[YouTube] Audio stream finished for ${title}`);
-        await fs
-          .remove(tempFilePath)
-          .catch(err => console.error('Failed to remove temp audio file:', err));
+        await fs.remove(tempFilePath).catch(err => console.error('Failed to remove temp audio file:', err));
       });
 
       readStream.on('error', async err => {
         console.error('[Audio Stream Error]:', err);
-        await fs
-          .remove(tempFilePath)
-          .catch(err => console.error('Failed to remove temp audio file:', err));
+        await fs.remove(tempFilePath).catch(err => console.error('Failed to remove temp audio file:', err));
       });
     } catch (error: any) {
       console.error('[handleAudio Error Details]:', error);
@@ -170,7 +166,6 @@ export class YoutubeService {
           error: 'Failed to process audio. YouTube might be blocking the request or FFmpeg failed.',
         });
       }
-      // Cleanup on error
       if (await fs.pathExists(tempFilePath)) {
         await fs.remove(tempFilePath).catch(() => {});
       }
@@ -181,15 +176,12 @@ export class YoutubeService {
     const height = parseInt(quality) || 720;
     console.log(`[YouTube] Starting Video Download (${height}p)...`);
 
-    // Ensure temp directory exists - use /tmp on Linux (Render) for better reliability
-    const isWindows = process.platform === 'win32';
     const tempDir = isWindows ? path.join(process.cwd(), 'temp_downloads') : '/tmp';
     await fs.ensureDir(tempDir);
 
     const tempFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.mp4`;
     const tempFilePath = path.join(tempDir, tempFileName);
 
-    // Enhanced format string: Prefer MP4 but allow all high-quality formats for 4K/2K
     const formatString = `(bv*[height<=${height}][ext=mp4]+ba[ext=m4a]/b[height<=${height}][ext=mp4] / bv*[height<=${height}]+ba/b[height<=${height}] / bestvideo+bestaudio/best)`;
 
     console.log(`[YouTube] Using format: ${formatString}`);
@@ -205,15 +197,12 @@ export class YoutubeService {
       if (ytDlpProcess.stderr) {
         ytDlpProcess.stderr.on('data', (data: any) => {
           const output = data.toString();
-          if (output.includes('%')) {
-            // Suppress progress logs but can be used for tracking
-          } else {
+          if (!output.includes('%')) {
             console.error(`[yt-dlp Video Stderr]: ${output}`);
           }
         });
       }
 
-      // Wait for the process to finish
       await new Promise((resolve, reject) => {
         ytDlpProcess.on('error', reject);
         ytDlpProcess.on('close', (code: number) => {
@@ -224,7 +213,6 @@ export class YoutubeService {
 
       console.log(`[YouTube] Download complete to ${tempFilePath}`);
 
-      // Check if file exists and has size
       if (!(await fs.pathExists(tempFilePath))) {
         throw new Error('Downloaded file not found');
       }
@@ -234,7 +222,6 @@ export class YoutubeService {
         throw new Error('Downloaded file is empty');
       }
 
-      // Send the file
       res.setHeader('Content-Type', 'video/mp4');
       res.setHeader('Content-Disposition', `attachment; filename="${title}.mp4"`);
       res.setHeader('Content-Length', stats.size);
@@ -244,28 +231,20 @@ export class YoutubeService {
 
       readStream.on('end', async () => {
         console.log(`[YouTube] Stream finished for ${title}`);
-        await fs
-          .remove(tempFilePath)
-          .catch(err => console.error('Failed to remove temp file:', err));
+        await fs.remove(tempFilePath).catch(err => console.error('Failed to remove temp file:', err));
       });
 
       readStream.on('error', async err => {
         console.error('[Stream Error]:', err);
-        await fs
-          .remove(tempFilePath)
-          .catch(err => console.error('Failed to remove temp file:', err));
+        await fs.remove(tempFilePath).catch(err => console.error('Failed to remove temp file:', err));
       });
     } catch (error: any) {
       console.error('[handleVideo Error]:', error.message || error);
       if (!res.headersSent) {
-        res
-          .status(500)
-          .json({
-            error:
-              'Failed to process high-quality video. The requested resolution might not be available or YouTube is blocking the request.',
-          });
+        res.status(500).json({
+          error: 'Failed to process high-quality video. The requested resolution might not be available or YouTube is blocking the request.',
+        });
       }
-      // Cleanup on error
       if (await fs.pathExists(tempFilePath)) {
         await fs.remove(tempFilePath).catch(() => {});
       }
