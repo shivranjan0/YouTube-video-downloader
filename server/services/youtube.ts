@@ -46,13 +46,14 @@ export class YoutubeService {
       console.log(`[YouTube] Request: ${format} | ${quality} | ${url}`);
       console.log('[YouTube] Fetching metadata...');
 
-      // 2. Format options for yt-dlp
+      // 2. Format options for yt-dlp - Using iOS client which is less likely to be blocked
       const commonOptions: any = {
         noWarnings: true,
         noCheckCertificates: true,
         preferFreeFormats: true,
-        addHeader: ['User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'],
-        extractorArgs: 'youtube:player-client=web_creator',
+        addHeader: ['User-Agent:com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iPhone OS 17_5_1 like Mac OS X; en_US)'],
+        extractorArgs: 'youtube:player-client=ios,web',
+        forceIpv4: true,
       };
 
       if (cookieFilePath) {
