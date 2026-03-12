@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Check, Loader2, Music, Video, Download } from 'lucide-react';
+import { X, Check, Music, Video, Download, ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
 import { downloadMedia } from '../services/api';
 
 interface DownloadModalProps {
@@ -95,109 +95,80 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ url, isOpen, onClose }) =
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '1rem 1.5rem 0.85rem',
+            padding: '1.25rem 1.5rem',
             borderBottom: '1px solid rgba(255,255,255,0.06)',
           }}
         >
-          <div>
-            <h2
-              style={{ fontWeight: 800, fontSize: '1.15rem', margin: 0, letterSpacing: '-0.01em' }}
-            >
-              Download <span style={{ color: accent, transition: 'color 0.3s' }}>Options</span>
-            </h2>
-            <p
-              style={{ color: 'rgba(255,255,255,0.28)', fontSize: '0.78rem', margin: '0.2rem 0 0' }}
-            >
-              Choose your format and quality
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            style={{
-              width: '32px',
-              height: '32px',
-              flexShrink: 0,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              color: 'rgba(255,255,255,0.4)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background 0.2s, color 0.2s',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
-              e.currentTarget.style.color = '#fff';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-              e.currentTarget.style.color = 'rgba(255,255,255,0.4)';
-            }}
-          >
-            <X size={15} />
-          </button>
+          {isDownloading ? (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={24} color="#fff" />
+                <span style={{ fontWeight: 700, fontSize: '1.4rem', color: '#fff' }}>Magic</span>
+              </div>
+              <button
+                onClick={onClose}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#fff',
+                  fontSize: '1.4rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                }}
+              >
+                Close
+              </button>
+            </>
+          ) : (
+            <>
+              <div>
+                <h2
+                  style={{ fontWeight: 800, fontSize: '1.15rem', margin: 0, letterSpacing: '-0.01em' }}
+                >
+                  Download <span style={{ color: accent, transition: 'color 0.3s' }}>Options</span>
+                </h2>
+                <p
+                  style={{ color: 'rgba(255,255,255,0.28)', fontSize: '0.78rem', margin: '0.2rem 0 0' }}
+                >
+                  Choose your format and quality
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  flexShrink: 0,
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  color: 'rgba(255,255,255,0.4)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background 0.2s, color 0.2s',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
+                  e.currentTarget.style.color = '#fff';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.color = 'rgba(255,255,255,0.4)';
+                }}
+              >
+                <X size={15} />
+              </button>
+            </>
+          )}
         </div>
 
         <div style={{ padding: '1rem 1.5rem 1.25rem' }}>
-          {/* ── Format selector ── */}
-          <label
-            style={{
-              display: 'block',
-              fontSize: '0.68rem',
-              fontWeight: 700,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: 'rgba(255,255,255,0.25)',
-              marginBottom: '0.6rem',
-            }}
-          >
-            Format
-          </label>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '0.5rem',
-              marginBottom: '1rem',
-            }}
-          >
-            {[
-              { id: 'mp4', label: 'MP4 Video', Icon: Video, color: '#C400FF' },
-              { id: 'mp3', label: 'MP3 Audio', Icon: Music, color: '#0CECDD' },
-            ].map(f => {
-              const on = selectedFormat === f.id;
-              return (
-                <button
-                  key={f.id}
-                  onClick={() => setSelectedFormat(f.id)}
-                  style={{
-                    padding: '0.7rem 1rem',
-                    borderRadius: '12px',
-                    border: `1.5px solid ${on ? f.color : 'rgba(255,255,255,0.07)'}`,
-                    background: on ? `${f.color}14` : 'rgba(255,255,255,0.02)',
-                    color: on ? f.color : 'rgba(255,255,255,0.38)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.45rem',
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                    boxShadow: on ? `0 0 20px ${f.color}28` : 'none',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  <f.Icon size={16} /> {f.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ── Quality (MP4 only) ── */}
-          {selectedFormat === 'mp4' && (
+          {!isDownloading && !isCompleted && (
             <>
+              {/* ── Format selector ── */}
               <label
                 style={{
                   display: 'block',
@@ -209,60 +180,118 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ url, isOpen, onClose }) =
                   marginBottom: '0.6rem',
                 }}
               >
-                Quality
+                Format
               </label>
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 1fr 1fr',
-                  gap: '0.45rem',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '0.5rem',
                   marginBottom: '1rem',
                 }}
               >
-                {qualityOptions.map(opt => {
-                  const on = selectedQuality === opt.value;
+                {[
+                  { id: 'mp4', label: 'MP4 Video', Icon: Video, color: '#C400FF' },
+                  { id: 'mp3', label: 'MP3 Audio', Icon: Music, color: '#0CECDD' },
+                ].map(f => {
+                  const on = selectedFormat === f.id;
                   return (
                     <button
-                      key={opt.value}
-                      onClick={() => setSelectedQuality(opt.value)}
+                      key={f.id}
+                      onClick={() => setSelectedFormat(f.id)}
                       style={{
-                        padding: '0.55rem 0.7rem',
-                        borderRadius: '10px',
-                        textAlign: 'left',
-                        border: `1.5px solid ${on ? '#FFF338' : 'rgba(255,255,255,0.06)'}`,
-                        background: on ? 'rgba(255,243,56,0.07)' : 'rgba(255,255,255,0.02)',
-                        color: on ? '#FFF338' : 'rgba(255,255,255,0.38)',
+                        padding: '0.7rem 1rem',
+                        borderRadius: '12px',
+                        border: `1.5px solid ${on ? f.color : 'rgba(255,255,255,0.07)'}`,
+                        background: on ? `${f.color}14` : 'rgba(255,255,255,0.02)',
+                        color: on ? f.color : 'rgba(255,255,255,0.38)',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between',
-                        boxShadow: on ? '0 0 14px rgba(255,243,56,0.16)' : 'none',
+                        justifyContent: 'center',
+                        gap: '0.45rem',
+                        fontWeight: 600,
+                        fontSize: '0.875rem',
+                        boxShadow: on ? `0 0 20px ${f.color}28` : 'none',
                         transition: 'all 0.2s',
                       }}
                     >
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: '0.8rem' }}>{opt.label}</div>
-                        <div style={{ fontSize: '0.68rem', opacity: 0.45, marginTop: '2px' }}>
-                          {opt.desc}
-                        </div>
-                      </div>
-                      <span
-                        style={{
-                          fontSize: '0.6rem',
-                          fontWeight: 800,
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          background: on ? 'rgba(255,243,56,0.15)' : 'rgba(255,255,255,0.05)',
-                          color: on ? '#FFF338' : 'rgba(255,255,255,0.22)',
-                          letterSpacing: '0.04em',
-                        }}
-                      >
-                        {opt.badge}
-                      </span>
+                      <f.Icon size={16} /> {f.label}
                     </button>
                   );
                 })}
               </div>
+
+              {/* ── Quality (MP4 only) ── */}
+              {selectedFormat === 'mp4' && (
+                <>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.14em',
+                      textTransform: 'uppercase',
+                      color: 'rgba(255,255,255,0.25)',
+                      marginBottom: '0.6rem',
+                    }}
+                  >
+                    Quality
+                  </label>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr 1fr',
+                      gap: '0.45rem',
+                      marginBottom: '1rem',
+                    }}
+                  >
+                    {qualityOptions.map(opt => {
+                      const on = selectedQuality === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          onClick={() => setSelectedQuality(opt.value)}
+                          style={{
+                            padding: '0.55rem 0.7rem',
+                            borderRadius: '10px',
+                            textAlign: 'left',
+                            border: `1.5px solid ${on ? '#FFF338' : 'rgba(255,255,255,0.06)'}`,
+                            background: on ? 'rgba(255,243,56,0.07)' : 'rgba(255,255,255,0.02)',
+                            color: on ? '#FFF338' : 'rgba(255,255,255,0.38)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            boxShadow: on ? '0 0 14px rgba(255,243,56,0.16)' : 'none',
+                            transition: 'all 0.2s',
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: '0.8rem' }}>{opt.label}</div>
+                            <div style={{ fontSize: '0.68rem', opacity: 0.45, marginTop: '2px' }}>
+                              {opt.desc}
+                            </div>
+                          </div>
+                          <span
+                            style={{
+                              fontSize: '0.6rem',
+                              fontWeight: 800,
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              background: on ? 'rgba(255,243,56,0.15)' : 'rgba(255,255,255,0.05)',
+                              color: on ? '#FFF338' : 'rgba(255,255,255,0.22)',
+                              letterSpacing: '0.04em',
+                            }}
+                          >
+                            {opt.badge}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </>
           )}
 
@@ -287,70 +316,132 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ url, isOpen, onClose }) =
           {isDownloading && (
             <div
               style={{
-                height: '2px',
-                borderRadius: '9999px',
-                background: 'rgba(255,255,255,0.06)',
-                marginBottom: '1rem',
-                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                margin: '2rem 0',
+                padding: '0 4px',
               }}
             >
+              {/* Left End Cap */}
               <div
                 style={{
-                  height: '100%',
-                  width: `${downloadProgress}%`,
-                  background: accent,
-                  borderRadius: '9999px',
-                  transition: 'width 0.3s',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, rgba(147, 197, 253, 0.3) 0%, rgba(59, 130, 246, 0.5) 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)',
                 }}
-              />
+              >
+                <ArrowLeft size={14} />
+              </div>
+
+              {/* Segments Container */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '6px',
+                  flex: 1,
+                  height: '10px',
+                }}
+              >
+                {[...Array(5)].map((_, i) => {
+                  const segmentThreshold = (i + 1) * 20;
+                  const prevThreshold = i * 20;
+                  const isFull = downloadProgress >= segmentThreshold;
+                  const isPartial = downloadProgress > prevThreshold && downloadProgress < segmentThreshold;
+                  const partialPercent = isPartial ? ((downloadProgress - prevThreshold) / 20) * 100 : 0;
+
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        flex: 1,
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        borderRadius: '99px',
+                        overflow: 'hidden',
+                        position: 'relative',
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          height: '100%',
+                          width: isFull ? '100%' : `${partialPercent}%`,
+                          background: 'linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%)',
+                          borderRadius: '99px',
+                          transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                          boxShadow: (isFull || isPartial) ? '0 0 10px rgba(6, 182, 212, 0.4)' : 'none',
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Right End Cap */}
+              <div
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'rgba(255, 255, 255, 0.2)',
+                  flexShrink: 0,
+                }}
+              >
+                <ArrowRight size={14} />
+              </div>
             </div>
           )}
 
           {/* ── Download button ── */}
-          <button
-            onClick={handleDownload}
-            disabled={isDownloading}
-            style={{
-              width: '100%',
-              padding: '1rem',
-              borderRadius: '14px',
-              border: 'none',
-              fontWeight: 700,
-              fontSize: '1rem',
-              letterSpacing: '0.01em',
-              cursor: isDownloading ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              background: isCompleted
-                ? '#0CECDD'
-                : isDownloading
-                  ? 'rgba(255,255,255,0.05)'
-                  : accent,
-              color: isCompleted ? '#07080f' : isDownloading ? 'rgba(255,255,255,0.22)' : '#fff',
-              boxShadow: isDownloading
-                ? 'none'
-                : isCompleted
+          {!isDownloading && (
+            <button
+              onClick={handleDownload}
+              style={{
+                width: '100%',
+                padding: '1rem',
+                borderRadius: '14px',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '1rem',
+                letterSpacing: '0.01em',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                background: isCompleted ? '#0CECDD' : accent,
+                color: isCompleted ? '#07080f' : '#fff',
+                boxShadow: isCompleted
                   ? '0 0 28px rgba(12,236,221,0.45)'
                   : `0 0 32px ${accent}55`,
-              transition: 'all 0.3s',
-            }}
-          >
-            {isDownloading ? (
-              <>
-                <Loader2 size={18} className="animate-spin" /> Downloading… {downloadProgress}%
-              </>
-            ) : isCompleted ? (
-              <>
-                <Check size={18} /> Download Complete!
-              </>
-            ) : (
-              <>
-                <Download size={18} /> Start Download
-              </>
-            )}
-          </button>
+                transition: 'all 0.3s',
+              }}
+            >
+              {isCompleted ? (
+                <>
+                  <Check size={18} /> Download Complete!
+                </>
+              ) : (
+                <>
+                  <Download size={18} /> Start Download
+                </>
+              )}
+            </button>
+          )}
 
           <p
             style={{

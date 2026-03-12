@@ -56,37 +56,87 @@ export class YoutubeService {
   private async handleAudio(url: string, title: string, res: Response) {
     console.log('[YouTube] Starting Audio Download...');
 
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
+    // Ensure temp directory exists
+    const tempDir = path.join(process.cwd(), 'temp_downloads');
+    await fs.ensureDir(tempDir);
 
-    const ytDlpProcess = ytDlp.exec(url, {
-      extractAudio: true,
-      audioFormat: 'mp3',
-      audioQuality: '0',
-      output: '-',
-      ffmpegLocation: ffmpegPath,
-      noWarnings: true,
-      noCheckCertificates: true,
-    });
+    const tempFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`;
+    const tempFilePath = path.join(tempDir, tempFileName);
 
-    if (ytDlpProcess.stderr) {
-      ytDlpProcess.stderr.on('data', (data: any) => {
-        console.error(`[yt-dlp Audio Stderr]: ${data.toString()}`);
+    try {
+      const ytDlpProcess = ytDlp.exec(url, {
+        extractAudio: true,
+        audioFormat: 'mp3',
+        audioQuality: '0',
+        output: tempFilePath,
+        ffmpegLocation: ffmpegPath,
+        noWarnings: true,
+        noCheckCertificates: true,
       });
+
+      if (ytDlpProcess.stderr) {
+        ytDlpProcess.stderr.on('data', (data: any) => {
+          const output = data.toString();
+          if (!output.includes('%')) {
+            console.error(`[yt-dlp Audio Stderr]: ${output}`);
+          }
+        });
+      }
+
+      // Wait for the process to finish
+      await new Promise((resolve, reject) => {
+        ytDlpProcess.on('error', reject);
+        ytDlpProcess.on('close', (code: number) => {
+          if (code === 0) resolve(true);
+          else reject(new Error(`yt-dlp exited with code ${code}`));
+        });
+      });
+
+      console.log(`[YouTube] Audio download complete to ${tempFilePath}`);
+
+      // Check if file exists and has size
+      if (!(await fs.pathExists(tempFilePath))) {
+        throw new Error('Downloaded audio file not found');
+      }
+
+      const stats = await fs.stat(tempFilePath);
+      if (stats.size === 0) {
+        throw new Error('Downloaded audio file is empty');
+      }
+
+      // Send the file
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
+      res.setHeader('Content-Length', stats.size);
+
+      const readStream = fs.createReadStream(tempFilePath);
+      readStream.pipe(res);
+
+      readStream.on('end', async () => {
+        console.log(`[YouTube] Audio stream finished for ${title}`);
+        await fs
+          .remove(tempFilePath)
+          .catch(err => console.error('Failed to remove temp audio file:', err));
+      });
+
+      readStream.on('error', async err => {
+        console.error('[Audio Stream Error]:', err);
+        await fs
+          .remove(tempFilePath)
+          .catch(err => console.error('Failed to remove temp audio file:', err));
+      });
+    } catch (error: any) {
+      console.error('[handleAudio Error]:', error.message || error);
+      if (!res.headersSent) {
+        res.status(500).json({
+          error: 'Failed to process audio. YouTube might be blocking the request or FFmpeg failed.',
+        });
+      }
+      // Cleanup on error
+      if (await fs.pathExists(tempFilePath)) {
+        await fs.remove(tempFilePath).catch(() => {});
+      }
     }
-
-    if (ytDlpProcess.stdout) {
-      ytDlpProcess.stdout.pipe(res);
-    }
-
-    ytDlpProcess.on('error', (err: any) => {
-      console.error('[yt-dlp Audio Process Error]:', err);
-      if (!res.headersSent) res.status(500).end();
-    });
-
-    ytDlpProcess.on('close', (code: number) => {
-      console.log(`[YouTube] Audio download process closed with code ${code}`);
-    });
   }
 
   private async handleVideo(url: string, title: string, quality: string, res: Response) {
