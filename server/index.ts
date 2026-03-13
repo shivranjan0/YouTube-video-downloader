@@ -96,7 +96,7 @@ app.post('/api/contact', async (req: Request, res: Response) => {
 app.use(express.static(distPath));
 
 // Fallback for SPA - MUST be after all API routes
-app.get('*', (req, res) => {
+app.get('(.*)', (req, res) => {
   if (fs.existsSync(path.join(distPath, 'index.html'))) {
     res.sendFile(path.join(distPath, 'index.html'));
   } else {
