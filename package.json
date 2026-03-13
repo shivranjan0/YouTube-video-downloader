@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "format": "prettier --write .",
     "server": "tsx server/index.ts",
-    "start": "npm run server"
+    "start": "npm run server",
+    "start:backend": "npm run server"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
