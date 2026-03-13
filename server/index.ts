@@ -5,10 +5,11 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { YoutubeService } from './services/youtube';
-import { MailService } from './services/mailer';
-import { detectPlatform } from './utils/detectPlatform';
+import { YoutubeService } from './services/youtube.js';
+import { MailService } from './services/mailer.js';
+import { detectPlatform } from './utils/detectPlatform.js';
 import * as dotenv from 'dotenv';
+import fs from 'fs-extra';
 
 // ESM polyfill for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -23,6 +24,9 @@ const PORT = process.env.PORT || 5000;
 // Initialize Services
 const youtubeService = new YoutubeService();
 const mailService = new MailService();
+
+// Serve static files from the React app build directory
+const distPath = path.join(__dirname, '../dist');
 
 // Middleware
 app.use(
@@ -85,6 +89,18 @@ app.post('/api/contact', async (req: Request, res: Response) => {
       error: 'Failed to send your message. Please try again later or email us directly.',
       details: error.message,
     });
+  }
+});
+
+// Serve static files from the React app build directory
+app.use(express.static(distPath));
+
+// Fallback for SPA - MUST be after all API routes
+app.get('*', (req, res) => {
+  if (fs.existsSync(path.join(distPath, 'index.html'))) {
+    res.sendFile(path.join(distPath, 'index.html'));
+  } else {
+    res.status(404).send('Not Found');
   }
 });
 

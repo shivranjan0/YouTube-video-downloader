@@ -4,15 +4,13 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"vite\" \"tsx server/index.ts\"",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "format": "prettier --write .",
     "server": "tsx server/index.ts",
-    "start": "concurrently \"npm run dev\" \"npm run server\"",
-    "start:backend": "tsx server/index.ts",
-    "postinstall": "node -e \"require('yt-dlp-exec/postinstall')\""
+    "start": "npm run server"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
