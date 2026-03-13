@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "server": "tsx server/index.ts",
     "start": "concurrently \"npm run dev\" \"npm run server\"",
-    "start:backend": "tsx server/index.ts"
+    "start:backend": "tsx server/index.ts",
+    "postinstall": "node -e \"require('yt-dlp-exec/postinstall')\""
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",

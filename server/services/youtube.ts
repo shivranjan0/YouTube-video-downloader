@@ -53,11 +53,9 @@ export class YoutubeService {
         noWarnings: true,
         noCheckCertificates: true,
         addHeader: [
-          'User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Accept-Language:en-US,en;q=0.9',
-          'Referer:https://www.youtube.com/',
+          'Accept-Language: en-US,en;q=0.9',
+          'Referer: https://www.youtube.com/',
         ],
-        extractorArgs: 'youtube:player-client=android,web,ios',
         forceIpv4: true,
         noCacheDir: true,
       };
@@ -66,26 +64,70 @@ export class YoutubeService {
         commonOptions.cookies = cookieFilePath;
       }
 
-      const info = await ytDlp(url, {
-        ...commonOptions,
-        dumpJson: true,
-      });
+      // 3. Client Rotation Strategy for Metadata
+      const clientConfigs = [
+        'youtube:player-client=ios,android;player-skip=web,canvas',
+        'youtube:player-client=tv,ios;player-skip=web,canvas',
+        'youtube:player-client=android;player-skip=web,canvas',
+      ];
+
+      let info: any;
+      let lastError: any;
+      let successfulConfigIndex = 0;
+
+      for (let i = 0; i < clientConfigs.length; i++) {
+        try {
+          const clientArg = clientConfigs[i];
+          console.log(`[YouTube] Fetching metadata (Attempt ${i + 1}/3 - ${clientArg})...`);
+          
+          info = await ytDlp(url, {
+            ...commonOptions,
+            extractorArgs: clientArg,
+            dumpJson: true,
+          });
+          
+          if (info) {
+            successfulConfigIndex = i;
+            break;
+          }
+        } catch (error: any) {
+          lastError = error;
+          console.warn(`[YouTube] Attempt ${i + 1} failed: ${error.message || 'Unknown error'}`);
+          if (i < clientConfigs.length - 1) {
+            console.log('[YouTube] Retrying with different client...');
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+      }
+
+      if (!info) {
+        throw lastError || new Error('Failed to fetch metadata after multiple attempts');
+      }
 
       // Need to parse if ytDlp returned a string
       const metadata = typeof info === 'string' ? JSON.parse(info) : info;
       const title = (metadata.title || 'video').replace(/[^\w\s-]/g, '');
       console.log(`[YouTube] Title: ${title}`);
 
+      // 4. Update commonOptions for actual download
+      const finalOptions = {
+        ...commonOptions,
+        extractorArgs: clientConfigs[successfulConfigIndex]
+      };
+
       if (format === 'mp3') {
-        await this.handleAudio(url, title, res, commonOptions);
+        await this.handleAudio(url, title, res, finalOptions);
       } else {
-        await this.handleVideo(url, title, quality, res, commonOptions);
+        await this.handleVideo(url, title, quality, res, finalOptions);
       }
     } catch (error: any) {
-      console.error('[yt-dlp Metadata Error Details]:', error);
+      console.error('[YouTube Error Details]:', error.message || error);
       if (!res.headersSent) {
+        const isBotError = error.message?.includes('Sign in to confirm you') || error.stderr?.includes('bot');
         res.status(500).json({
-          error: 'YouTube is blocking the request. Please check if cookies are required.',
+          error: isBotError 
+            ? 'YouTube is temporarily blocking requests. Try again in a few minutes or provide fresh cookies.' 
+            : 'Failed to process request. Please check the URL or try a different format.',
         });
       }
     } finally {
